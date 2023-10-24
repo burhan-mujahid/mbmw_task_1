@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "108489235173",
+    "project_id": "mamwtask1",
+    "storage_bucket": "mamwtask1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:108489235173:android:5d7285278fcdcdd2b6520c",
+        "android_client_info": {
+          "package_name": "com.example.mamw_task_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyApFfjARlOi6fflO74AemvYI4w_MRyZtbE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
