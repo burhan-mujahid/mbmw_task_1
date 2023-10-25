@@ -5,11 +5,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:mamw_task_1/ui/user_screens/details_screen.dart';
 import 'package:provider/provider.dart';
 
 import '../../widgets/credential_input_field.dart';
-import '../../widgets/user_image_container.dart';
 import '../auth_screens/login_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -20,6 +19,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  final _formKey = GlobalKey<FormState>();
   File? _userProfileImage;
   late MainScreenProvider provider;
 
@@ -30,20 +30,20 @@ class _MainScreenState extends State<MainScreen> {
     provider.initializeData();
   }
 
-  Future<void> getProfileImage() async {
-    if (provider.isEditable) {
-      final pickedFile = await ImagePicker().pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 80,
-      );
-      setState(() {
-        _userProfileImage = pickedFile != null ? File(pickedFile.path) : null;
-        if (_userProfileImage != null) {
-          provider.imageUrl = _userProfileImage!.path;
-        }
-      });
-    }
-  }
+  // Future<void> getProfileImage() async {
+  //   if (provider.isEditable) {
+  //     final pickedFile = await ImagePicker().pickImage(
+  //       source: ImageSource.gallery,
+  //       imageQuality: 80,
+  //     );
+  //     setState(() {
+  //       _userProfileImage = pickedFile != null ? File(pickedFile.path) : null;
+  //       if (_userProfileImage != null) {
+  //         provider.imageUrl = _userProfileImage!.path;
+  //       }
+  //     });
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +56,12 @@ class _MainScreenState extends State<MainScreen> {
           automaticallyImplyLeading: false,
           centerTitle: true,
           title: Text('Main Screen'),
+          leading: IconButton(
+              onPressed: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => DetailsScreen()));
+              },
+              icon: Icon(Icons.person)),
           actions: [
             PopupMenuButton(
               itemBuilder: (context) {
@@ -68,11 +74,34 @@ class _MainScreenState extends State<MainScreen> {
               },
               onSelected: (value) {
                 if (value == 'logout') {
-                  FirebaseAuth.instance.signOut();
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => LoginScreen()),
-                    (Route<dynamic> route) => false,
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text("Confirm Logout"),
+                        content: Text("Are you sure you want to logout?"),
+                        actions: [
+                          TextButton(
+                            child: Text("No"),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          TextButton(
+                            child: Text("Yes"),
+                            onPressed: () {
+                              FirebaseAuth.instance.signOut();
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => LoginScreen()),
+                                (Route<dynamic> route) => false,
+                              );
+                            },
+                          ),
+                        ],
+                      );
+                    },
                   );
                 }
               },
@@ -82,100 +111,131 @@ class _MainScreenState extends State<MainScreen> {
         body: provider == null
             ? Container()
             : SingleChildScrollView(
-                child: Padding(
-                  padding:
+          child: Padding(
+            padding:
                       const EdgeInsets.symmetric(horizontal: 20.0, vertical: 2),
-                  child: Column(
-                    children: [
-                      SizedBox(height: screenHeight * 0.05),
-                      Consumer<MainScreenProvider>(
-                        builder: (context, provider, child) =>
-                            UserImageContainer(
-                          getGalleryImage: getProfileImage,
-                          image: provider.isEditable ? _userProfileImage : null,
-                          imageUrl: provider.imageUrl,
-                          validateText: 'Please choose profile picture',
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        SizedBox(height: screenHeight * 0.05),
+                        // Consumer<MainScreenProvider>(
+                        //   builder: (context, provider, child) =>
+                        //       UserImageContainer(
+                        //     getGalleryImage: getProfileImage,
+                        //     image: provider.isEditable ? _userProfileImage : null,
+                        //     imageUrl: provider.imageUrl,
+                        //     validateText: 'Please choose profile picture',
+                        //   ),
+                        // ),
+                        SizedBox(height: screenHeight * 0.02),
+                        Consumer<MainScreenProvider>(
+                          builder: (context, provider, child) =>
+                              CredentialInputField(
+                            keyboardType: TextInputType.text,
+                            hintText: 'First name',
+                            prefixIcon: Icon(Icons.person),
+                            controller: provider.firstnameController,
+                            enabled: provider.isEditable,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Please enter your first name";
+                              }
+                              return null;
+                            },
+                            inputFormatter:
+                                FilteringTextInputFormatter.singleLineFormatter,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: screenHeight * 0.02),
-                      Consumer<MainScreenProvider>(
-                        builder: (context, provider, child) =>
-                            CredentialInputField(
-                          keyboardType: TextInputType.text,
-                          hintText: 'User name',
-                          prefixIcon: Icon(Icons.person),
-                          controller: provider.nameController,
-                          enabled: provider.isEditable,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "Please enter your phone number";
-                            }
-                            return null;
-                          },
-                          inputFormatter:
-                              FilteringTextInputFormatter.singleLineFormatter,
+                        SizedBox(height: screenHeight * 0.02),
+                        Consumer<MainScreenProvider>(
+                          builder: (context, provider, child) =>
+                              CredentialInputField(
+                            keyboardType: TextInputType.text,
+                            hintText: 'Last Name',
+                            prefixIcon: Icon(Icons.person),
+                            controller: provider.lastnameController,
+                            enabled: provider.isEditable,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Please enter your last number";
+                              }
+                              return null;
+                            },
+                            inputFormatter:
+                                FilteringTextInputFormatter.singleLineFormatter,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: screenHeight * 0.02),
-                      Consumer<MainScreenProvider>(
-                        builder: (context, provider, child) =>
-                            CredentialInputField(
-                          keyboardType: TextInputType.number,
-                          hintText: 'Phone number',
-                          prefixIcon: Icon(Icons.call),
-                          controller: provider.phoneNumberController,
-                          enabled: provider.isEditable,
-                          minLength: 11,
-                          maxLength: 11,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "Please enter your phone number";
-                            }
-                            if (value.length < 10) {
-                              return "Phone Number must be at least 10 characters long";
-                            }
-                            return null;
-                          },
-                          inputFormatter:
-                              FilteringTextInputFormatter.singleLineFormatter,
+                        SizedBox(height: screenHeight * 0.02),
+                        Consumer<MainScreenProvider>(
+                          builder: (context, provider, child) =>
+                              CredentialInputField(
+                            keyboardType: TextInputType.emailAddress,
+                            hintText: 'Email',
+                            prefixIcon: Icon(Icons.email),
+                            controller: provider.emailController,
+                            enabled: provider.isEditable,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Please enter your email";
+                              }
+                              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                                  .hasMatch(value)) {
+                                return 'Please enter a valid email';
+                              }
+                              return null;
+                            },
+                            inputFormatter:
+                                FilteringTextInputFormatter.singleLineFormatter,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: screenHeight * 0.02),
-                      ElevatedButton(
-                        onPressed: () {
-                          provider.setIsEditable(true);
-                        },
-                        child: Text('Edit Profile'),
-                      ),
-                      SizedBox(height: screenHeight * 0.02),
-                      Visibility(
-                        visible: provider.isEditable,
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            await provider.updatedData();
-                            provider.setIsEditable(false);
-                            if (_userProfileImage != null) {
-                              await provider
-                                  .uploadImageToFirebase(_userProfileImage!);
-                            }
-                          },
-                          child: Text('Done'),
+
+                        SizedBox(height: screenHeight * 0.02),
+                        Visibility(
+                          visible: !provider.isEditable,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              provider.setIsEditable(true);
+                            },
+                            child: Text('Edit Profile'),
+                          ),
                         ),
-                      ),
-                    ],
+                        SizedBox(height: screenHeight * 0.02),
+                        Visibility(
+                          visible: provider.isEditable,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              if (_formKey.currentState!.validate()) {
+                                await provider.updatedData();
+                                provider.setIsEditable(false);
+                              }
+                              // if (_userProfileImage != null) {
+                              //   await provider
+                              //       .uploadImageToFirebase(_userProfileImage!);
+                              // }
+                            },
+                            child: Text('Done'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
+        ),
       ),
     );
   }
 }
 
 class MainScreenProvider with ChangeNotifier {
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController phoneNumberController = TextEditingController();
+  final TextEditingController firstnameController = TextEditingController();
+  final TextEditingController lastnameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+
+  //final TextEditingController phoneNumberController = TextEditingController();
   bool isEditable = false;
-  String? imageUrl;
+
+  // String? imageUrl;
 
   final FirebaseStorage storage = FirebaseStorage.instance;
 
@@ -187,9 +247,11 @@ class MainScreenProvider with ChangeNotifier {
 
     final DocumentSnapshot<Map<String, dynamic>> snapshot =
         await databaseRef.doc(currentUser!.uid).get();
-    nameController.text = snapshot.data()?['name'] ?? '';
-    phoneNumberController.text = snapshot.data()?['phone_number'] ?? '';
-    imageUrl = snapshot.data()?['profile_image_url'] ?? '';
+    firstnameController.text = snapshot.data()?['first_name'] ?? '';
+    lastnameController.text = snapshot.data()?['last_name'] ?? '';
+    emailController.text = snapshot.data()?['email'] ?? '';
+    // phoneNumberController.text = snapshot.data()?['phone_number'] ?? '';
+    // imageUrl = snapshot.data()?['profile_image_url'] ?? '';
   }
 
   Future<void> updatedData() async {
@@ -200,9 +262,9 @@ class MainScreenProvider with ChangeNotifier {
 
     await databaseRef.doc(currentUser!.uid).update({
       'uid': currentUser!.uid,
-      'name': nameController.text,
-      'phone_number': phoneNumberController.text,
-      'profile_image_url': imageUrl,
+      'first_name': firstnameController.text,
+      'last_name': lastnameController.text,
+      'email': emailController.text,
       'timestamp': FieldValue.serverTimestamp(),
     });
   }
@@ -212,12 +274,4 @@ class MainScreenProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> uploadImageToFirebase(File image) async {
-    final User? currentUser = FirebaseAuth.instance.currentUser;
-    final Reference storageReference =
-        storage.ref().child('user_images/${currentUser!.uid}');
-    await storageReference.putFile(image);
-    imageUrl = await storageReference.getDownloadURL();
-    notifyListeners();
-  }
 }

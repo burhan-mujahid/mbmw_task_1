@@ -18,16 +18,16 @@ class _PageHeadingState extends State<PageHeading> {
 
     return Column(
       children: [
-        SizedBox(
-          height: MediaQuery.of(context).size.height * 0.03,
-        ),
+        // SizedBox(
+        //   height: MediaQuery.of(context).size.height * 0.03,
+        // ),
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              width: screenWidth * 0.05,
-            ),
+            // SizedBox(
+            //   width: screenWidth * 0.05,
+            // ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -39,17 +39,17 @@ class _PageHeadingState extends State<PageHeading> {
                     color: Colors.blue,
                   ),
                 ),
-                SizedBox(
-                  height: screenWidth * 0.015,
-                ),
-                Text(
-                  widget.subtitle,
-                  style: TextStyle(
-                    fontSize: screenWidth * 0.035,
-                    fontFamily: 'Rubik Regular',
-                    color: Colors.black,
-                  ),
-                ),
+                // SizedBox(
+                //   height: screenWidth * 0.015,
+                // ),
+                // Text(
+                //   widget.subtitle,
+                //   style: TextStyle(
+                //     fontSize: screenWidth * 0.035,
+                //     fontFamily: 'Rubik Regular',
+                //     color: Colors.black,
+                //   ),
+                // ),
               ],
             ),
           ],

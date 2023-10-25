@@ -47,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
         loading = false;
       });
 
-      Utils().toastMessage(value.user!.email.toString());
+      Utils().toastMessage('Login Successful');
       Navigator.push(
           context, MaterialPageRoute(builder: (context) => MainScreen()));
     }).onError((error, stackTrace) {
@@ -115,7 +115,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         if (value.length < 8) {
                           return "Password must be at least 8 characters long";
                         }
-                        if (!RegExp(r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$')
+                        if (!RegExp(
+                                r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{6,}$')
                             .hasMatch(value)) {
                           return 'Password must contain at least one letter and one number';
                         }

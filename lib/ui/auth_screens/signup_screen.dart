@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,7 +8,7 @@ import '../../widgets/auth_button.dart';
 import '../../widgets/auth_screen_heading.dart';
 import '../../widgets/credential_input_field.dart';
 import '../../widgets/password_input_field.dart';
-import 'add_user_firestore.dart';
+import '../user_screens/main_screen.dart';
 import 'login_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -22,41 +23,55 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final firstnameController = TextEditingController();
+  final lastnameController = TextEditingController();
+  final phoneNumberController = TextEditingController();
   FirebaseAuth _auth = FirebaseAuth.instance;
 
-  @override
-  void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
-    super.dispose();
-  }
-
-  void signUp() {
+  void signUp() async {
     setState(() {
       loading = true;
     });
 
-    _auth
-        .createUserWithEmailAndPassword(
-      email: emailController.text.toString(),
-      password: passwordController.text.toString(),
-    )
-        .then((value) async {
-      setState(() {
-        loading = false;
-      });
-
-      Utils().toastMessage(value.user!.email.toString());
-      await Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => AddUserInfoFirestore()),
+    try {
+      await _auth.createUserWithEmailAndPassword(
+        email: emailController.text.toString(),
+        password: passwordController.text.toString(),
       );
-    }).onError((error, stackTrace) {
-      Utils().toastMessage(error.toString());
+
+      User? currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        await addUserInfoToFirestore(currentUser);
+        Utils().toastMessage('User Successfully Registered');
+        await Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => MainScreen()),
+          (Route<dynamic> route) => false,
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      Utils().toastMessage(e.message!);
+    } finally {
       setState(() {
         loading = false;
       });
-    });
+    }
+  }
+
+  Future<void> addUserInfoToFirestore(User currentUser) async {
+    final CollectionReference<Map<String, dynamic>> databaseRef =
+        FirebaseFirestore.instance.collection('Users');
+    try {
+      await databaseRef.doc(currentUser.uid).set({
+        'uid': currentUser.uid,
+        'first_name': firstnameController.text.trim(),
+        'last_name': lastnameController.text.trim(),
+        'email': emailController.text.trim(),
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      Utils().toastMessage('Error: $e');
+    }
   }
 
   @override
@@ -82,6 +97,36 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 child: Column(
                   children: [
                     CredentialInputField(
+                      keyboardType: TextInputType.text,
+                      hintText: 'First Name',
+                      prefixIcon: Icon(Icons.person),
+                      controller: firstnameController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return "Please enter your first name";
+                        }
+                        return null;
+                      },
+                      inputFormatter:
+                          FilteringTextInputFormatter.singleLineFormatter,
+                    ),
+                    SizedBox(height: screenHeight * 0.02),
+                    CredentialInputField(
+                      keyboardType: TextInputType.text,
+                      hintText: 'Last Name',
+                      prefixIcon: Icon(Icons.person),
+                      controller: lastnameController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return "Please enter your last name";
+                        }
+                        return null;
+                      },
+                      inputFormatter:
+                          FilteringTextInputFormatter.singleLineFormatter,
+                    ),
+                    SizedBox(height: screenHeight * 0.02),
+                    CredentialInputField(
                       keyboardType: TextInputType.emailAddress,
                       hintText: 'Email',
                       prefixIcon: Icon(Icons.email),
@@ -97,7 +142,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         return null;
                       },
                       inputFormatter:
-                          FilteringTextInputFormatter.singleLineFormatter,
+                      FilteringTextInputFormatter.singleLineFormatter,
                     ),
                     SizedBox(height: screenHeight * 0.02),
                     PasswordInputField(
@@ -113,14 +158,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         if (value.length < 8) {
                           return "Password must be at least 8 characters long";
                         }
-                        if (!RegExp(r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$')
+                        if (!RegExp(
+                                r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{6,}$')
                             .hasMatch(value)) {
                           return 'Password must contain at least one letter and one number';
                         }
                         return null;
                       },
                       inputFormatter:
-                          FilteringTextInputFormatter.singleLineFormatter,
+                      FilteringTextInputFormatter.singleLineFormatter,
                     ),
                   ],
                 ),
